@@ -1,0 +1,31 @@
+# Build output
+dist/
+build/
+test/testBuild
+
+# Coverage and test artifacts
+coverage/
+.nyc_output/
+
+# Node modules folder
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Editor and IDE settings
+.vscode/
+.idea/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Misc
+*.tgz
+*.tmp
+*.swp
