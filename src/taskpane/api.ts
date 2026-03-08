@@ -2,11 +2,8 @@
  * Backend API client. Base URL is set at build time via API_BASE_URL env var
  * (default: Cloud Run citation service).
  */
-declare const __API_BASE_URL__: string;
-const API_BASE =
-  typeof __API_BASE_URL__ !== "undefined"
-    ? __API_BASE_URL__
-    : "https://citation-service-759083008215.us-east1.run.app";
+const API_BASE = "/api";
+
 
 function url(path: string): string {
   const base = API_BASE.replace(/\/$/, "");

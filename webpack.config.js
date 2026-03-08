@@ -141,6 +141,15 @@ module.exports = async (env, options) => {
         options: env.WEBPACK_BUILD || options.https !== undefined ? options.https : await getHttpsOptions(),
       },
       port: process.env.npm_package_config_dev_server_port || 3000,
+      proxy: [
+        {
+          context: ["/api"],
+          target: "https://citation-service-759083008215.us-east1.run.app",
+          changeOrigin: true,
+          pathRewrite: { "^/api": "" },
+          secure: true,
+        },
+      ],
     },
   };
 
