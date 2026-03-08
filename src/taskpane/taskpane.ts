@@ -1,5 +1,7 @@
 /* global Word console */
 
+import { analyze as apiAnalyze, type AnalyzeResponse } from "./api";
+
 /** Highlight colors: yellow first, then 9 others. Cycles for each new selection. */
 const HIGHLIGHT_COLORS: string[] = [
   "Yellow",
@@ -16,32 +18,64 @@ const HIGHLIGHT_COLORS: string[] = [
 
 let nextColorIndex = 0;
 
+/** Get currently selected text from the document. */
+export async function getSelectedText(): Promise<string> {
+  let text = "";
+  await Word.run(async (context) => {
+    const range = context.document.getSelection();
+    range.load("text");
+    await context.sync();
+    text = range.text?.trim() ?? "";
+  });
+  return text;
+}
+
+/** Apply the next highlight color to the current selection. */
+async function highlightCurrentSelection(): Promise<void> {
+  await Word.run(async (context) => {
+    const range = context.document.getSelection();
+    const color = HIGHLIGHT_COLORS[nextColorIndex % HIGHLIGHT_COLORS.length];
+    nextColorIndex += 1;
+    range.font.highlightColor = color;
+    await context.sync();
+  });
+}
+
+export interface AnalyzeSelectionResult {
+  text: string;
+  citation: AnalyzeResponse | null;
+  error?: string;
+}
+
 /**
- * Analyzes the current selection: retrieves its text (logged to console)
- * and applies the next highlight color in the cycle (yellow, then 9 others).
+ * Gets the current selection, sends it to the backend POST /analyze,
+ * then highlights the selection and returns the citation result.
  */
-export async function analyzeSelection(): Promise<void> {
-  try {
-    await Word.run(async (context) => {
-      const range = context.document.getSelection();
-      range.load("text");
-      await context.sync();
-
-      const text = range.text?.trim() ?? "";
-      if (!text) {
-        console.log("Analyze Selection: no text selected.");
-        return;
-      }
-
-      console.log("Analyze Selection:", text);
-
-      const color = HIGHLIGHT_COLORS[nextColorIndex % HIGHLIGHT_COLORS.length];
-      nextColorIndex += 1;
-
-      range.font.highlightColor = color;
-      await context.sync();
-    });
-  } catch (error) {
-    console.log("Error in analyzeSelection: " + error);
+export async function analyzeSelection(options?: {
+  documentId?: string;
+  userId?: string;
+}): Promise<AnalyzeSelectionResult> {
+  const text = await getSelectedText();
+  if (!text) {
+    console.log("Analyze Selection: no text selected.");
+    return { text: "", citation: null };
   }
+
+  const { ok, status, data, error: apiError } = await apiAnalyze({
+    text,
+    document_id: options?.documentId,
+    user_id: options?.userId,
+  });
+
+  if (!ok) {
+    const errorMsg = apiError ?? `HTTP ${status}`;
+    console.log("Analyze API error:", errorMsg);
+    return { text, citation: null, error: errorMsg };
+  }
+
+  console.log("Analyze Selection:", text, "->", data);
+
+  await highlightCurrentSelection();
+
+  return { text, citation: data ?? null };
 }

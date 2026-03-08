@@ -125,6 +125,9 @@ module.exports = async (env, options) => {
       new webpack.ProvidePlugin({
         Promise: ["es6-promise", "Promise"],
       }),
+      new webpack.DefinePlugin({
+        __API_BASE_URL__: JSON.stringify(process.env.API_BASE_URL || "http://localhost:5000"),
+      }),
     ],
     devServer: {
       hot: true,
