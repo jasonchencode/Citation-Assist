@@ -24,44 +24,74 @@ interface TextInsertionProps {
 }
 
 const useStyles = makeStyles({
-  instructions: {
-    fontWeight: tokens.fontWeightSemibold,
-    marginTop: "20px",
-    marginBottom: "10px",
-  },
   analyzeSection: {
     display: "flex",
     flexDirection: "column",
-    alignItems: "center",
+    alignItems: "stretch",
+    padding: "24px 20px 24px",
+    boxSizing: "border-box",
+    width: "100%",
+    rowGap: "16px",
+  },
+  instructions: {
+    fontWeight: tokens.fontWeightSemibold,
+    marginTop: "4px",
+    marginBottom: "12px",
+    textAlign: "left",
+    width: "100%",
+  },
+  analyzeButton: {
+    alignSelf: "flex-start",
+    marginBottom: "8px",
+  },
+  error: {
+    color: tokens.colorPaletteRedForeground1,
+    marginTop: "4px",
+    marginBottom: "8px",
+    alignSelf: "flex-start",
+  },
+  refreshButton: {
+    alignSelf: "flex-start",
+    marginTop: "8px",
+    marginBottom: "8px",
   },
   citationList: {
-    marginTop: "12px",
+    marginTop: "4px",
     width: "100%",
     maxHeight: "280px",
     overflowY: "auto",
     display: "flex",
     flexDirection: "column",
-    gap: "8px",
+    gap: "12px",
+    paddingBottom: "12px",
+    boxSizing: "border-box",
   },
   citationCard: {
-    padding: "12px",
+    padding: "16px 18px",
     backgroundColor: tokens.colorNeutralBackground3,
-    borderRadius: "4px",
+    borderRadius: "6px",
     maxWidth: "100%",
     flexShrink: 0,
+    boxShadow: tokens.shadow4,
   },
   citationTitle: {
     fontWeight: tokens.fontWeightSemibold,
-    marginBottom: "4px",
+    marginBottom: "6px",
+  },
+  citationText: {
+    fontSize: tokens.fontSizeBase300,
+    lineHeight: "1.4",
+    marginBottom: "6px",
+  },
+  citationMeta: {
+    marginTop: "2px",
+    fontSize: tokens.fontSizeBase200,
   },
   cardActions: {
-    marginTop: "8px",
+    marginTop: "10px",
     display: "flex",
     gap: "8px",
-  },
-  error: {
-    color: tokens.colorPaletteRedForeground1,
-    marginTop: "8px",
+    flexWrap: "wrap",
   },
 });
 
@@ -137,6 +167,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
         Select text in the document, then click the button to analyze it and show the citation.
       </Field>
       <Button
+        className={styles.analyzeButton}
         appearance="primary"
         disabled={isAnalyzing}
         size="large"
@@ -152,11 +183,11 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
       {citations.length > 0 && (
         <>
           <Button
+            className={styles.refreshButton}
             appearance="secondary"
             size="medium"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            style={{ marginTop: "12px" }}
           >
             {isRefreshing ? "Refreshing…" : "Refresh"}
           </Button>
@@ -164,8 +195,8 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
           {citations.map((entry) => (
             <div key={entry.id} className={styles.citationCard}>
               <div className={styles.citationTitle}>Citation</div>
-              <div>{entry.citation.citation_text}</div>
-              <div style={{ marginTop: "4px", fontSize: tokens.fontSizeBase200 }}>
+              <div className={styles.citationText}>{entry.citation.citation_text}</div>
+              <div className={styles.citationMeta}>
                 Confidence: {(entry.citation.confidence * 100).toFixed(0)}%
               </div>
               {entry.citation.url && (
@@ -173,7 +204,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                   href={entry.citation.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ marginTop: "4px", display: "block" }}
+                  style={{ marginTop: "4px", display: "inline-block" }}
                 >
                   Source
                 </Link>
