@@ -31,7 +31,7 @@ const useStyles = makeStyles({
     padding: "24px 20px 24px",
     boxSizing: "border-box",
     width: "100%",
-    rowGap: "16px",
+    height: "100%",
   },
   instructions: {
     fontWeight: tokens.fontWeightSemibold,
@@ -58,12 +58,12 @@ const useStyles = makeStyles({
   citationList: {
     marginTop: "4px",
     width: "100%",
-    maxHeight: "280px",
+    flex: 1,
     overflowY: "auto",
     display: "flex",
     flexDirection: "column",
     gap: "12px",
-    paddingBottom: "12px",
+    paddingBottom: "24px",
     boxSizing: "border-box",
   },
   citationCard: {
