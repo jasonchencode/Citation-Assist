@@ -83,17 +83,21 @@ export async function analyzeSelection(options?: {
     return { text, citation: null, error: errorMsg };
   }
 
-  console.log("Analyze Selection:", text, "->", data);
+  const citation = data ?? null;
+  if (!citation || !citation.citation_text || citation.citation_text.trim() === "" || citation.confidence < 0.50) {
+    const lowConfidenceMsg = "Unable to generate citation. Try refining your selection.";
+    console.log(lowConfidenceMsg, citation);
+    return { text, citation: null, error: lowConfidenceMsg };
+  }
+
+  console.log("Analyze Selection:", text, "->", citation);
 
   await highlightCurrentSelection();
 
-  const citation = data ?? null;
-  if (citation) {
-    try {
-      await insertCitationComment(citation.citation_text, citation.source_id);
-    } catch (err) {
-      console.log("insertCitationComment error:", err);
-    }
+  try {
+    await insertCitationComment(citation.citation_text, citation.source_id);
+  } catch (err) {
+    console.log("insertCitationComment error:", err);
   }
 
   return { text, citation };

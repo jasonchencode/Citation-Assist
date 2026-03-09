@@ -177,7 +177,17 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
       </Button>
 
       {lastError && (
-        <div className={styles.error}>Analysis failed: {lastError}</div>
+        <div className={styles.error}>
+          <span>{lastError}</span>
+          <Button
+            appearance="secondary"
+            size="small"
+            onClick={handleAnalyzeSelection}
+            style={{ marginLeft: "8px" }}
+          >
+            Retry
+          </Button>
+        </div>
       )}
 
       {citations.length > 0 && (
