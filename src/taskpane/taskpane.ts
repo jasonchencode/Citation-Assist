@@ -79,3 +79,25 @@ export async function analyzeSelection(options?: {
 
   return { text, citation: data ?? null };
 }
+
+/**
+ * Searches the document for the given text and selects the first occurrence,
+ * so Word jumps back to that passage (e.g. for Re-select in the citation list).
+ */
+export async function reselectText(text: string): Promise<void> {
+  if (!text.trim()) return;
+  try {
+    await Word.run(async (context) => {
+      const searchResults = context.document.body.search(text.trim());
+      const firstRange = searchResults.getFirstOrNullObject();
+      firstRange.load("isNullObject");
+      await context.sync();
+      if (!firstRange.isNullObject) {
+        firstRange.select();
+        await context.sync();
+      }
+    });
+  } catch (err) {
+    console.log("reselectText error:", err);
+  }
+}

@@ -1,7 +1,7 @@
 import * as React from "react";
 import TextInsertion from "./TextInsertion";
 import { makeStyles } from "@fluentui/react-components";
-import { analyzeSelection } from "../taskpane";
+import { analyzeSelection, reselectText } from "../taskpane";
 
 interface AppProps {
   title: string;
@@ -22,8 +22,9 @@ const App: React.FC<AppProps> = (props: AppProps) => {
     <div className={styles.root}>
       <TextInsertion
         analyzeSelection={analyzeSelection}
-        documentId={props.documentId}
-        userId={props.userId}
+        reselectText={reselectText}
+        documentId={props.documentId ?? "trustops-handbook-v1"}
+        userId={props.userId ?? "candidate_1"}
       />
     </div>
   );

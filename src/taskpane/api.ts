@@ -54,6 +54,9 @@ export interface AnalyzeRequest {
   user_id?: string;
 }
 
+const DEFAULT_DOCUMENT_ID = "trustops-handbook-v1";
+const DEFAULT_USER_ID = "candidate_1";
+
 /** POST /analyze – analyze selected text and get citation. */
 export async function analyze(
   request: AnalyzeRequest
@@ -64,12 +67,30 @@ export async function analyze(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         text: request.text,
-        ...(request.document_id != null && { document_id: request.document_id }),
-        ...(request.user_id != null && { user_id: request.user_id }),
+        document_id: request.document_id ?? DEFAULT_DOCUMENT_ID,
+        user_id: request.user_id ?? DEFAULT_USER_ID,
       }),
     });
-    const data = res.ok ? await res.json() : undefined;
-    return { ok: res.ok, status: res.status, data };
+    let data: AnalyzeResponse | undefined;
+    let errorMessage: string | undefined;
+    const contentType = res.headers.get("content-type") ?? "";
+    if (contentType.includes("application/json")) {
+      const body = await res.json().catch(() => ({}));
+      if (res.ok) {
+        data = body;
+      } else if (typeof body?.error === "string") {
+        errorMessage = body.error;
+      }
+    }
+    if (!res.ok && !errorMessage) {
+      errorMessage = `HTTP ${res.status}`;
+    }
+    return {
+      ok: res.ok,
+      status: res.status,
+      data,
+      error: errorMessage,
+    };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return { ok: false, status: 0, error: message };
