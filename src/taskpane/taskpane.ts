@@ -5,7 +5,6 @@ import { analyze as apiAnalyze, type AnalyzeResponse } from "./api";
 /** Highlight colors: yellow first, then 9 others. Cycles for each new selection. */
 const HIGHLIGHT_COLORS: string[] = [
   "Yellow",
-  "BrightGreen",
   "Turquoise",
   "Pink",
   "Blue",
@@ -35,7 +34,7 @@ async function highlightCurrentSelection(): Promise<void> {
   await Word.run(async (context) => {
     const range = context.document.getSelection();
     const color = HIGHLIGHT_COLORS[nextColorIndex % HIGHLIGHT_COLORS.length];
-    nextColorIndex += 1;
+    nextColorIndex = (nextColorIndex + 1) % HIGHLIGHT_COLORS.length;
     range.font.highlightColor = color;
     await context.sync();
   });
@@ -45,6 +44,7 @@ export interface AnalyzeSelectionResult {
   text: string;
   citation: AnalyzeResponse | null;
   error?: string;
+  highlightColor?: string;
 }
 
 /**
@@ -74,7 +74,7 @@ export async function analyzeSelection(options?: {
   }
 
   const citation = data ?? null;
-  if (!citation || !citation.citation_text || citation.citation_text.trim() === "" || citation.confidence < 0.50) {
+  if (!citation || !citation.citation_text || citation.citation_text.trim() === "" || citation.confidence < 0.5) {
     const lowConfidenceMsg = "Unable to generate citation. Try refining your selection.";
     console.log(lowConfidenceMsg, citation);
     return { text, citation: null, error: lowConfidenceMsg };
@@ -84,7 +84,14 @@ export async function analyzeSelection(options?: {
 
   await highlightCurrentSelection();
 
-  return { text, citation };
+  return {
+    text,
+    citation,
+    highlightColor:
+      HIGHLIGHT_COLORS[
+        (nextColorIndex - 1 + HIGHLIGHT_COLORS.length) % HIGHLIGHT_COLORS.length
+      ],
+  };
 }
 
 /**

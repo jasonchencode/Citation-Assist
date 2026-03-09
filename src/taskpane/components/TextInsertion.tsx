@@ -14,6 +14,7 @@ export interface CitationEntry {
   id: string;
   text: string;
   citation: AnalyzeResponse;
+  highlightColor?: string;
 }
 
 interface TextInsertionProps {
@@ -78,6 +79,20 @@ const useStyles = makeStyles({
     fontWeight: tokens.fontWeightSemibold,
     marginBottom: "6px",
   },
+  citationHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: "6px",
+  },
+  colorDot: {
+    width: "12px",
+    height: "12px",
+    borderRadius: "999px",
+    display: "inline-block",
+    marginLeft: "8px",
+    flexShrink: 0,
+  },
   citationText: {
     fontSize: tokens.fontSizeBase300,
     lineHeight: "1.4",
@@ -101,6 +116,18 @@ function generateId(): string {
   return `citation-${nextId}`;
 }
 
+const highlightColorMap: Record<string, string> = {
+  Yellow: "#f8f803",
+  Turquoise: "#63e7e8",
+  Pink: "#ea07fd",
+  Blue: "#010bfd",
+  Red: "#db0906",
+  DarkBlue: "#00038b",
+  Teal: "#348382",
+  Green: "#3a6104",
+  Violet: "#800080",
+};
+
 const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) => {
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);
   const [citations, setCitations] = React.useState<CitationEntry[]>([]);
@@ -117,9 +144,15 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
       });
       if (value.citation) {
         setCitations((prev) => [
-          { id: generateId(), text: value.text, citation: value.citation! },
+          {
+            id: generateId(),
+            text: value.text,
+            citation: value.citation!,
+            highlightColor: value.highlightColor,
+          },
           ...prev,
         ]);
+        void Promise.resolve(props.reselectText(value.text));
       } else if (value.error) {
         setLastError(value.error);
       } else if (!value.text) {
@@ -204,7 +237,18 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
           <div className={styles.citationList}>
           {citations.map((entry) => (
             <div key={entry.id} className={styles.citationCard}>
-              <div className={styles.citationTitle}>Citation</div>
+              <div className={styles.citationHeader}>
+                <div className={styles.citationTitle}>Citation</div>
+                {entry.highlightColor && (
+                  <span
+                    className={styles.colorDot}
+                    style={{
+                      backgroundColor:
+                        highlightColorMap[entry.highlightColor] ?? "#FFE066",
+                    }}
+                  />
+                )}
+              </div>
               <div className={styles.citationText}>{entry.citation.citation_text}</div>
               <div className={styles.citationMeta}>
                 Confidence: {(entry.citation.confidence * 100).toFixed(0)}%
