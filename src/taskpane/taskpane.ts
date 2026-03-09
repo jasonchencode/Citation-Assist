@@ -120,3 +120,40 @@ export async function reselectText(text: string): Promise<void> {
     console.log("reselectText error:", err);
   }
 }
+
+/**
+ * Removes highlight and associated comments for the first matching occurrence of the given text.
+ * Used when a citation is removed from the UI list.
+ */
+export async function removeCitation(text: string): Promise<void> {
+  const needle = text.trim();
+  if (!needle) return;
+
+  try {
+    await Word.run(async (context) => {
+      const searchResults = context.document.body.search(needle);
+      const firstRange = searchResults.getFirstOrNullObject();
+      firstRange.load("isNullObject");
+      await context.sync();
+      if (firstRange.isNullObject) return;
+
+      // Remove highlight. The runtime accepts `null` to clear highlight.
+      (firstRange.font as any).highlightColor = null;
+
+      // Delete comments if supported (WordApi 1.4+).
+      try {
+        const comments = firstRange.getComments();
+        comments.load("items");
+        await context.sync();
+        comments.items.forEach((c) => c.delete());
+      } catch (commentErr) {
+        // Ignore if comments APIs aren't available or deletion fails.
+        console.log("removeCitation comment cleanup error:", commentErr);
+      }
+
+      await context.sync();
+    });
+  } catch (err) {
+    console.log("removeCitation error:", err);
+  }
+}

@@ -6,6 +6,7 @@ import {
   makeStyles,
   Link,
 } from "@fluentui/react-components";
+import { removeCitation } from "../taskpane";
 import type { AnalyzeSelectionResult } from "../taskpane";
 import type { AnalyzeResponse } from "../api";
 import { getDocument } from "../api";
@@ -181,7 +182,15 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                 <Button
                   appearance="secondary"
                   size="small"
-                  onClick={() => handleRemove(entry.id)}
+                  onClick={() => {
+                    try {
+                      void Promise.resolve(removeCitation(entry.text)).catch(() => {});
+                    } catch {
+                      // Ignore.
+                    } finally {
+                      handleRemove(entry.id);
+                    }
+                  }}
                 >
                   Remove
                 </Button>
