@@ -9,7 +9,6 @@ import {
 import { removeCitation, checkCitationExists } from "../taskpane";
 import type { AnalyzeSelectionResult } from "../taskpane";
 import type { AnalyzeResponse } from "../api";
-import { getDocument } from "../api";
 
 export interface CitationEntry {
   id: string;
@@ -64,17 +63,6 @@ const useStyles = makeStyles({
     color: tokens.colorPaletteRedForeground1,
     marginTop: "8px",
   },
-  documentPreview: {
-    marginTop: "8px",
-    padding: "8px",
-    backgroundColor: tokens.colorNeutralBackground4,
-    borderRadius: "4px",
-    maxHeight: "120px",
-    overflow: "auto",
-    fontSize: tokens.fontSizeBase200,
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
-  },
 });
 
 let nextId = 0;
@@ -87,8 +75,6 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);
   const [citations, setCitations] = React.useState<CitationEntry[]>([]);
   const [lastError, setLastError] = React.useState<string | null>(null);
-  const [documentContent, setDocumentContent] = React.useState<unknown>(null);
-  const [loadingDoc, setLoadingDoc] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   const handleAnalyzeSelection = async () => {
@@ -140,17 +126,6 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
       // Silently ignore.
     } finally {
       setIsRefreshing(false);
-    }
-  };
-
-  const handleViewDocument = async () => {
-    setLoadingDoc(true);
-    setDocumentContent(null);
-    try {
-      const res = await getDocument();
-      setDocumentContent(res.body ?? res.error ?? { status: res.status });
-    } finally {
-      setLoadingDoc(false);
     }
   };
 
@@ -231,21 +206,6 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
           ))}
           </div>
         </>
-      )}
-
-      {/* Debug: document content */}
-      <Field className={styles.instructions} style={{ marginTop: "20px" }}>
-        Debug: backend document content
-      </Field>
-      <Button appearance="secondary" size="small" onClick={handleViewDocument} disabled={loadingDoc}>
-        {loadingDoc ? "Loading…" : "View document"}
-      </Button>
-      {documentContent !== null && (
-        <pre className={styles.documentPreview}>
-          {typeof documentContent === "string"
-            ? documentContent
-            : JSON.stringify(documentContent, null, 2)}
-        </pre>
       )}
     </div>
   );

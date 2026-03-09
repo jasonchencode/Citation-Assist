@@ -22,25 +22,6 @@ export async function getHealth(): Promise<{ ok: boolean; status: number; error?
   }
 }
 
-/** GET /document – inspect backend source material (for debugging). */
-export async function getDocument(): Promise<{ ok: boolean; status: number; body?: unknown; error?: string }> {
-  try {
-    const res = await fetch(url("/document"), { method: "GET" });
-    if (!res.ok) return { ok: false, status: res.status };
-    const contentType = res.headers.get("content-type") ?? "";
-    let body: unknown;
-    if (contentType.includes("application/json")) {
-      body = await res.json().catch(() => ({}));
-    } else {
-      body = await res.text();
-    }
-    return { ok: true, status: res.status, body };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return { ok: false, status: 0, error: message };
-  }
-}
-
 export interface AnalyzeResponse {
   source_id: string;
   citation_text: string;
