@@ -6,7 +6,7 @@ import {
   makeStyles,
   Link,
 } from "@fluentui/react-components";
-import { removeCitation } from "../taskpane";
+import { removeCitation, checkCitationExists } from "../taskpane";
 import type { AnalyzeSelectionResult } from "../taskpane";
 import type { AnalyzeResponse } from "../api";
 import { getDocument } from "../api";
@@ -89,6 +89,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
   const [lastError, setLastError] = React.useState<string | null>(null);
   const [documentContent, setDocumentContent] = React.useState<unknown>(null);
   const [loadingDoc, setLoadingDoc] = React.useState(false);
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   const handleAnalyzeSelection = async () => {
     setIsAnalyzing(true);
@@ -119,6 +120,27 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
 
   const handleReselect = (text: string) => {
     void Promise.resolve(props.reselectText(text));
+  };
+
+  const handleRefresh = async () => {
+    if (citations.length === 0) return;
+    setIsRefreshing(true);
+    try {
+      const stillExist = await Promise.all(
+        citations.map(async (entry) => {
+          try {
+            return await checkCitationExists(entry.text);
+          } catch {
+            return true;
+          }
+        })
+      );
+      setCitations((prev) => prev.filter((_, i) => stillExist[i]));
+    } catch {
+      // Silently ignore.
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleViewDocument = async () => {
@@ -153,7 +175,17 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
       )}
 
       {citations.length > 0 && (
-        <div className={styles.citationList}>
+        <>
+          <Button
+            appearance="secondary"
+            size="medium"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            style={{ marginTop: "12px" }}
+          >
+            {isRefreshing ? "Refreshing…" : "Refresh"}
+          </Button>
+          <div className={styles.citationList}>
           {citations.map((entry) => (
             <div key={entry.id} className={styles.citationCard}>
               <div className={styles.citationTitle}>Citation</div>
@@ -197,7 +229,8 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        </>
       )}
 
       {/* Debug: document content */}

@@ -157,3 +157,25 @@ export async function removeCitation(text: string): Promise<void> {
     console.log("removeCitation error:", err);
   }
 }
+
+/**
+ * Returns true if the given text exists in the document body (at least one match), false otherwise.
+ * Used to detect when cited text has been deleted so the citation list can be synced.
+ */
+export async function checkCitationExists(text: string): Promise<boolean> {
+  const needle = text.trim();
+  if (!needle) return false;
+  try {
+    let found = false;
+    await Word.run(async (context) => {
+      const searchResults = context.document.body.search(needle);
+      const firstRange = searchResults.getFirstOrNullObject();
+      firstRange.load("isNullObject");
+      await context.sync();
+      found = !firstRange.isNullObject;
+    });
+    return found;
+  } catch {
+    return false;
+  }
+}
