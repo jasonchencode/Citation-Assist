@@ -41,16 +41,6 @@ async function highlightCurrentSelection(): Promise<void> {
   });
 }
 
-/** Insert a Word comment on the current selection with citation text and source_id. */
-async function insertCitationComment(citationText: string, sourceId: string): Promise<void> {
-  const commentBody = `Citation: ${citationText}\nSource ID: ${sourceId}`;
-  await Word.run(async (context) => {
-    const range = context.document.getSelection();
-    range.insertComment(commentBody);
-    await context.sync();
-  });
-}
-
 export interface AnalyzeSelectionResult {
   text: string;
   citation: AnalyzeResponse | null;
@@ -93,12 +83,6 @@ export async function analyzeSelection(options?: {
   console.log("Analyze Selection:", text, "->", citation);
 
   await highlightCurrentSelection();
-
-  try {
-    await insertCitationComment(citation.citation_text, citation.source_id);
-  } catch (err) {
-    console.log("insertCitationComment error:", err);
-  }
 
   return { text, citation };
 }
