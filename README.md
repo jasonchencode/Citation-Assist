@@ -1,71 +1,77 @@
-# Build Word add-ins using Office Add-ins Development Kit
+# Word Citation Highlight Add-in
 
-Word add-ins are integrations built by third parties into Word by using [Word JavaScript API](https://learn.microsoft.com/en-us/office/dev/add-ins/reference/overview/word-add-ins-reference-overview) and [Office Platform capabilities](https://learn.microsoft.com/en-us/office/dev/add-ins/overview/office-add-ins).
+This project is a Word Office.js task pane add-in that lets you analyze selected text in a document, get citation metadata from a backend API, and visually track those citations with synchronized highlights and comments in the document.
 
-## How to run this project
+## What the add-in does
+
+- **Analyze selected text**: When you select text in a Word document and click **Analyze Selection** in the task pane, the add-in:
+  - Reads the current selection using the **Word JavaScript API**.
+  - Sends the text (along with a fixed `document_id` and `user_id`) to a backend **`POST /api/analyze`** endpoint.
+  - Receives a citation response containing `source_id`, `citation_text`, `confidence`, and `url`.
+
+- **Highlight and tag in Word**:
+  - On a successful response with sufficient confidence, the add-in applies a highlight color to the selected text in the document.
+  - Each analyzed selection uses the next color from a fixed palette, so different citations are visually distinguishable.
+
+- **Task pane citation list**:
+  - Every successful analysis is added to a **scrollable citation list** in the task pane.
+  - Each card shows:
+    - The **citation text**
+    - **Confidence** as a percentage
+    - An optional **Source** link (if a URL is present)
+    - A **color dot** that matches the highlight color applied in the document
+  - You can:
+    - Click **Re-select** to jump Word’s selection back to the original passage.
+    - Click **Remove** to remove the card and clear the corresponding highlight and comments from the document.
+
+- **Error handling and retries**:
+  - If no text is selected, the task pane shows a **“No text selected”** inline message instead of calling the API.
+  - If the API returns an error, the task pane shows the error message inline and provides a **Retry** button so you can re-run the request without re-clicking Analyze.
+  - If the backend returns a null or low-confidence result, the UI shows **“Unable to generate citation. Try refining your selection.”** instead of adding a citation card.
+
+- **Sync with document changes**:
+  - A **Refresh** button re-checks each citation’s text against the current document using `checkCitationExists` and removes cards whose text no longer exists (for example, if you deleted the highlighted text in Word).
+
+## Running the project
 
 ### Prerequisites
 
-- Node.js (the latest LTS version). Visit the [Node.js site](https://nodejs.org/) to download and install the right version for your operating system. To verify that you've already installed these tools, run the commands `node -v` and `npm -v` in your terminal.
-- Office connected to a Microsoft 365 subscription. You might qualify for a Microsoft 365 E5 developer subscription through the [Microsoft 365 Developer Program](https://developer.microsoft.com/microsoft-365/dev-program), see [FAQ](https://learn.microsoft.com/office/developer-program/microsoft-365-developer-program-faq#who-qualifies-for-a-microsoft-365-e5-developer-subscription-) for details. Alternatively, you can [sign up for a 1-month free trial](https://www.microsoft.com/microsoft-365/try?rtc=1) or [purchase a Microsoft 365 plan](https://www.microsoft.com/microsoft-365/buy/compare-all-microsoft-365-products).
+- **Node.js** (LTS) installed (`node -v`, `npm -v` should work).
+- **Word** as part of a Microsoft 365 subscription, or a compatible perpetual version.
 
-### Run the add-in using Office Add-ins Development Kit extension
+### Start the dev server
 
-1. **Open the Office Add-ins Development Kit**
-    
-    In the **Activity Bar**, select the **Office Add-ins Development Kit** icon to open the extension.
+From the project root:
 
-1. **Preview Your Office Add-in (F5)**
+```bash
+npm install
+npm run dev-server
+```
 
-    Select **Preview Your Office Add-in(F5)** to launch the add-in and debug the code. In the Quick Pick menu, select the option **Word Desktop (Edge Chromium)**.
+This starts `webpack-dev-server` on `https://localhost:3000` with a development build.
 
-    The extension then checks that the prerequisites are met before debugging starts. Check the terminal for detailed information if there are issues with your environment. After this process, the Word desktop application launches and sideloads the add-in.
+### Sideload the add-in into Word
 
-1. **Stop Previewing Your Office Add-in**
+Using the **Office Add-ins Development Kit** (recommended):
 
-    Once you are finished testing and debugging the add-in, select **Stop Previewing Your Office Add-in**. This closes the web server and removes the add-in from the registry and cache.
+1. Open this folder in VS Code / Cursor with the Office Add-ins Development Kit extension installed.
+2. In the extension’s view, choose **Preview Your Office Add-in (F5)**.
+3. When prompted, choose **Word Desktop (Edge Chromium)**.
+4. Word will launch and sideload the add-in using `manifest.xml`.
 
-## Use the add-in project
+Alternatively, you can use the `office-addin-debugging` scripts directly:
 
-The add-in project that you've created contains sample code for a basic task pane add-in.
+```bash
+npm run start   # Starts dev server (if not already) and sideloads the add-in
+npm run stop    # Stops debugging and removes the sideloaded add-in
+```
 
-## Explore the add-in code
+## Customizing for your backend
 
-To explore an Office add-in project, you can start with the key files listed below.
+By default, the project expects a backend reachable via `/api/analyze` (proxied from `webpack-dev-server` to your actual URL). To hook this up:
 
-- The `./manifest.xml` file in the root directory of the project defines the settings and capabilities of the add-in.  <br>You can check whether your manifest file is valid by selecting **Validate Manifest File** option from the Office Add-ins Development Kit.
-- The `./src/taskpane/taskpane.html` file contains the HTML markup for the task pane.
-- The `./src/taskpane/**/*.tsx` file contains the react code and Office JavaScript API code that facilitates interaction between the task pane and the Excel application.
-
-## Troubleshooting
-
-If you have problems running the add-in, take these steps.
-
-- Close any open instances of Word.
-- Close the previous web server started for the add-in with the **Stop Previewing Your Office Add-in** Office Add-ins Development Kit extension option.
-
-If you still have problems, see [troubleshoot development errors](https://learn.microsoft.com//office/dev/add-ins/testing/troubleshoot-development-errors) or [create a GitHub issue](https://aka.ms/officedevkitnewissue) and we'll help you.  
-
-For information on running the add-in on Word on the web, see [Sideload Office Add-ins to Office on the web](https://learn.microsoft.com/office/dev/add-ins/testing/sideload-office-add-ins-for-testing).
-
-For information on debugging on older versions of Office, see [Debug add-ins using developer tools in Microsoft Edge Legacy](https://learn.microsoft.com/office/dev/add-ins/testing/debug-add-ins-using-devtools-edge-legacy).
-
-## Make code changes
-
-All the information about Office Add-ins is found in our [official documentation](https://learn.microsoft.com/office/dev/add-ins/overview/office-add-ins). You can also explore more samples in the Office Add-ins Development Kit. Select **View Samples** to see more samples of real-world scenarios.
-
-If you edit the manifest as part of your changes, use the **Validate Manifest File** option in the Office Add-ins Development Kit. This shows you errors in the manifest syntax.
-
-## Engage with the team
-
-Did you experience any problems? [Create an issue](https://github.com/OfficeDev/OfficeAddinDevKit/issues) and we'll help you out.
-
-Want to learn more about new features and best practices for the Office platform? [Join the Microsoft Office Add-ins community call](https://learn.microsoft.com/office/dev/add-ins/overview/office-add-ins-community-call).
-
-## Copyright
-
-Copyright (c) 2024 Microsoft Corporation. All rights reserved.
-
-## Disclaimer
-
-**THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.**
+1. Configure your dev proxy or hosting so `/api/*` calls from `https://localhost:3000` reach your backend.
+2. Ensure your backend implements:
+   - `POST /api/analyze` with body `{ text, document_id, user_id }`.
+   - Returns `{ source_id, citation_text, confidence, url }` or an error payload with an `error` string.
+3. Add CORS rules allowing `https://localhost:3000`.
